@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<title>SafeWayHome</title>
+<script
+	src="https://apis.openapi.sk.com/tmap/jsv2?version=1&appKey=l7xx2eff6322cd2944cab62446d299f7f6e3"></script>
+<script type="text/javascript">
+    var map;
+	var bounds;
+	// 페이지가 로딩이 된 후 호출하는 함수입니다.
+	function initTmap() {
+		// map 생성
+		// Tmapv2.Map을 이용하여, 지도가 들어갈 div, 넓이, 높이를 설정합니다.
+		map = new Tmapv2.Map("map_div", {
+            center: new Tmapv2.LatLng(37.566481622437934,126.98502302169841), 
+            zoomControl : true,
+            scrollwheel : true
+        }); // 지도가 생성될 div
+
+        // 지도에 컨트롤러 추가
+		new Tmapv2.extension.MeasureDistance({
+			map: map
+        });
+
+        //Marker 객체 생성.
+		var marker1 = new Tmapv2.Marker({
+			position: new Tmapv2.LatLng(37.566481622437934,126.98402302169841), //Marker의 중심좌표 설정.
+			icon: 'http://tmapapi.sktelecom.com/upload/tmap/marker/pin_b_m_a.png', //Marker의 아이콘.
+			map: map //Marker가 표시될 Map 설정.
+		});
+		//Marker 객체 생성.
+		var marker2 = new Tmapv2.Marker({
+			position: new Tmapv2.LatLng(37.566481622437934,126.98602302169841), //Marker의 중심좌표 설정.
+			icon: 'http://tmapapi.sktelecom.com/upload/tmap/marker/pin_b_m_b.png', //Marker의 아이콘.
+			map: map //Marker가 표시될 Map 설정.
+		});
+		
+		// 두 지점간의 거리를 계산합니다.		
+		distance = marker1.getPosition().distanceTo(marker2.getPosition());
+
+        //EPSG:3857 좌표계를 생성합니다.
+		var epsg3857 = new Tmapv2.Point(14135906, 4518356);
+		// WGS84 좌표계로 변환합니다
+		var wgs84 = Tmapv2.Projection.convertEPSG3857ToWGS84GEO(epsg3857);
+		
+		// 마커를 생성합니다.
+		var marker3 = new Tmapv2.Marker({
+			position: wgs84,
+			icon: 'http://tmapapi.sktelecom.com/upload/tmap/marker/pin_b_m_a.png',
+			map: map
+            });
+        
+        var content ="<div style=' position: relative; border-bottom: 1px solid #dcdcdc; line-height: 18px; padding: 0 35px 2px 0;'>"+
+					"<div style='font-size: 12px; line-height: 15px;'>"+
+					"<span style='display: inline-block; width: 14px; height: 14px; background-image: url('http://tmapapi.sktelecom.com/resources/images/common/footer_logo.png'); vertical-align: middle; margin-right: 5px;'></span>티맵 모빌리티"+
+					"</div>"+
+					"</div>"+
+					"<div style='position: relative; padding-top: 5px; display:inline-block'>"+
+					"<div style='display:inline-block; border:1px solid #dcdcdc;'><img src='http://tmapapi.sktelecom.com/resources/images/common/footer_logo.png' width='90' height='70'></div>"+
+					"<div style='display:inline-block; margin-left:5px; vertical-align: top;'>"+
+					"<span style='font-size: 12px; margin-left:2px; margin-bottom:2px; display:block;'>서울 중구 삼일대로 343 (우)04538</span>"+
+					"<span style='font-size: 12px; color:#888; margin-left:2px; margin-bottom:2px; display:block;'>(지번) 저동1가 114</span>"+
+					"<span style='font-size: 12px; margin-left:2px;'><a href='https://openapi.sk.com/' target='blank'>개발자센터</a></span>"+
+					"</div>"+
+					"</div>";
+		
+        //Popup 객체 생성.
+		infoWindow = new Tmapv2.InfoWindow({
+			position: new Tmapv2.LatLng(37.56520450, 126.98702028), //Popup 이 표출될 맵 좌표
+			content: content, //Popup 표시될 text
+			type: 2, //Popup의 type 설정.
+			map: map //Popup이 표시될 맵 객체
+		});
+
+        map.addListener("click", onClick); // 이벤트의 종류와 해당 이벤트 발생 시 실행할 함수를 리스너를 통해 등록합니다
+		map.addListener("zoom_changed", onChanged); // 지도의 줌 변경시, 이벤트 리스너 등록.
+		map.addListener("drag", onDrag); // 지도 드래그시, 이벤트 리스너 등록.
+		map.addListener("dragstart", onDragstart); // 지도 드래그 시작시, 이벤트 리스너 등록.
+		map.addListener("dragend", onDragend); // 지도 드래그 끝났을 때, 이벤트 리스너 등록.
+		map.addListener("contextmenu", onContextmenu); // 지도 우클릭시, 이벤트 리스너 등록.
+		map.addListener("touchstart", onTouchstart); // 모바일에서 지도 터치 시작시, 이벤트 리스너 등록.
+		map.addListener("touchend", onTouchend); // 모바일에서 지도 터치 터치가 끝났을때, 이벤트 리스너 등록.
+
+        // Tmapv2.extension.KeyboardControl를 사용하여 지도를 키보드로 컨트롤 할 수 있는 기능을 추가합니다.
+		var keyboardControl = new Tmapv2.extension.KeyboardControl();
+		keyboardControl.setMap(map);
+	};
+
+    // 지도를 클릭했을때 발생하는 이벤트 함수입니다.
+	function onClick(e) {
+		var result = '클릭한 위치의 좌표는' + e.latLng + '입니다.';
+		var resultDiv = document.getElementById("result");
+		resultDiv.innerHTML = result;
+	}
+	function onChanged(e) {
+		var result = '현재 zoom : ' + e.zoom+ '입니다.';
+		var resultDiv = document.getElementById("result");
+		resultDiv.innerHTML = result;
+	}
+	function onDrag(e) {
+		var result = '드래그한 위치의 좌표는' + e.latLng + '입니다.';
+		var resultDiv = document.getElementById("result");
+		resultDiv.innerHTML = result;
+	}
+	function onDragstart(e) {
+		var result = '드래그를 시작한 위치의 좌표는' + e.latLng + '입니다.';
+		var resultDiv = document.getElementById("result");
+		resultDiv.innerHTML = result;
+	}
+	function onDragend(e) {
+		var result = '드래그가 끝난 위치의 중앙좌표는' + e.latLng + '입니다.';
+		var resultDiv = document.getElementById("result");
+		resultDiv.innerHTML = result;
+	}
+	function onContextmenu(e) {
+		var result = '우클릭한 위치의 좌표는' + e.latLng + '입니다.';
+		var resultDiv = document.getElementById("result");
+		resultDiv.innerHTML = result;
+	}
+	function onTouchstart(e) {
+		var result = '모바일에서 터치가 시작된 위치의 좌표는' + e.latLng + '입니다.';
+		var resultDiv = document.getElementById("result");
+		resultDiv.innerHTML = result;
+	}
+
+	function onTouchend(e) {
+		var result = '모바일에서 터치가 끝난 위치의 좌표는' + e.latLng + '입니다.';
+		var resultDiv = document.getElementById("result");
+		resultDiv.innerHTML = result;
+	}
+
+    //처음위치로 이동하는 함수입니다.
+	function Move(){
+	 	var lonlat = new Tmapv2.LatLng(37.566481622437934,126.98502302169841);
+		map.setCenter(lonlat); // 지도의 중심 좌표를 설정합니다.
+	}
+
+	function fn_bound() {
+		//지도의 대각선 위경도 좌표를 보여줍니다.
+		var bound = map.getBounds(); //지도의 영역을 가져오는 함수
+		var result = '[ WGS84 ]영역은 ' + bound + '입니다.'; // 표출할 메시지
+		var resultDiv = document.getElementById("result"); // 메시지가 표시될 요소
+		resultDiv.innerHTML = result; // 요소의 메시지 값을 변경
+	}
+
+	function fn_screenSize() {
+		//현재 표시되는 지도의 스크린상의 높이와 폭값을 보여줍니다.
+		var screenSize = map.screenSize(); // 지도 화면 사이즈를 가져오는 함수
+		var result = '<p>화면 사이즈 (width/height)값은 ' + screenSize.width() + '/'	+ screenSize.height() + '입니다.</p>'; // 표출할 메시지
+		var resultDiv = document.getElementById("result"); // 메시지가 표시될 요소
+		resultDiv.innerHTML = result; // 요소의 메시지 값을 변경
+	}
+
+    // '두 지점간의 거리' 버튼을 클릭하면 두 지점 간의 거리를 확인할 수 있습니다.
+	function Info() {
+		var result ='두 지점 간의 거리 : '+distance+' '; 
+		var resultDiv = document.getElementById("result");
+		resultDiv.innerHTML = result;
+	}
+
+    // 지도의 드래그 이동을 막아주는 함수입니다.
+	function DragBlock(){
+	 	map.setOptions({ draggable: false }); //지도 드래그 이동을 비활성화 합니다.
+	}
+	// 지도의 드래그 이동을 가능하게 하는 함수입니다.
+	function Drag(){
+		map.setOptions({ draggable: true }); //지도 드래그 이동을 활성화 합니다.
+	}
+
+    // 지도의 확대축소 기능을 막을 수 있는 함수입니다.
+	function ZoomFalse(){
+		map._data.options.scrollwheel = false; // 지도 확대축소 비활성화
+	  	
+	 }
+	 // 지도의 확대축소 기능을 가능하게 하는 함수입니다.
+	 function ZoomTrue(){
+		map._data.options.scrollwheel = true; // 지도 확대축소 활성화
+	 }
+
+</script>
+</head>
+<body onload="initTmap()"><!-- 맵 생성 실행 -->
+	<div id="map_div" style="width:90%; height:600px"></div>
+	<div>
+		<button onClick="fn_bound()">WGS84 영역의 확인</button>
+		<button onClick="fn_screenSize()">지도 화면 사이즈 확인</button>
+        <button onClick="Move()">처음 위치로 지도 이동</button>
+        <button onClick="Info()">두 지점간의 거리</button>
+        <button onClick="DragBlock()">지도 드래그 이동 막기</button>
+		<button onClick="Drag()">지도 드래그 이동 켜기</button>
+        <button onClick="ZoomFalse()">지도 확대 축소 막기</button>
+		<button onClick="ZoomTrue()">지도 확대 축소 켜기</button>
+		<p id="result" />
+	</div>
+</body>
+</html>
