@@ -1,4 +1,4 @@
 ### Tmap API example
 
-Using TMap Api
-Navigation Api Practice
+- Using TMap Api
+- Navigation Api Practice
