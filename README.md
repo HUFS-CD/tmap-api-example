@@ -1,15 +1,7 @@
-# Safe-Way-Home
-Navigation system guiding people to safe way with CCTV location DB. 
+### Tmap API Example
 
-Using TMap Api
-Seoul Public Data Portal CCTV Database
-
-### Member
-- 201701220 남호석
-- 구예찬
-- 이상민
-- 이혜원
-- 이수아
+- Using Tmap API
+- Navigation sample practice
 
 ### Safe_Way_Nav.html
 tmap api 보면서 이것저것 해본 파일
